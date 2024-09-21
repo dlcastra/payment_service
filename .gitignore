@@ -92,3 +92,6 @@ Thumbs.db
 firebase.json
 .firebaserc
 public/index.html
+
+# DB
+database.sqlite
