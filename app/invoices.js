@@ -1,9 +1,26 @@
-const crypto = require('crypto');
-const {ec} = require('elliptic');
-const express = require('express');
+// Base
+// ...
+// Installed
+// ...
+// Local
+const {PORT} = require("../core/settings");
+const {app} = require("../core/middleware");
+const {getMonobankPublicKey, verifySignature} = require("../app/utils");
 
-const ecInstance = new ec('secp256k1');
 
-const app = express();
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
 
-app.use(express.json())
+app.get("/check-signature", async (req, res) => {
+    try {
+        const publicKey = await getMonobankPublicKey();
+        const checkSignature = verifySignature(req, publicKey);
+
+        res.json({data: checkSignature});
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ error: "An error occurred during signature verification" });
+
+    }
+});
