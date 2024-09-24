@@ -1,7 +1,9 @@
 const sequelize = require("../database");
 const {app} = require("../core/middleware");
 const {PORT} = require("../core/settings");
+const invoicesRouters = require("../app/invoices")
 
+app.use(invoicesRouters);
 
 async function startServer() {
     try {

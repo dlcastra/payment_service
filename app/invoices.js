@@ -1,9 +1,9 @@
 // Base
 // ...
 // Installed
+const express = require('express');
 const {v4: uuidv4} = require('uuid');
 // Local
-const {app} = require("../core/middleware");
 const {
     getMonobankPublicKey,
     verifySignature,
@@ -11,8 +11,9 @@ const {
     createTransaction
 } = require("../app/utils");
 
+const router = express.Router();
 
-app.get("/check-signature", async (req, res) => {
+router.get("/check-signature", async (req, res) => {
     try {
         const publicKey = await getMonobankPublicKey();
         const checkSignature = verifySignature(req, publicKey);
@@ -25,7 +26,7 @@ app.get("/check-signature", async (req, res) => {
     }
 });
 
-app.post("/make-transaction", async (req, res) => {
+router.post("/make-transaction", async (req, res) => {
     const transactionId = uuidv4();
 
     const invoiceUrl = await createInvoice(req, transactionId, "https://webhook.site/2968557e-0fca-4b6b-9c41-96828ec83aae",)
@@ -42,3 +43,4 @@ app.post("/make-transaction", async (req, res) => {
     res.json({transactionId, invoiceUrl});
 })
 
+module.exports = router;
