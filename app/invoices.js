@@ -13,23 +13,12 @@ const {
 
 const router = express.Router();
 
-router.get("/check-signature", async (req, res) => {
-    try {
-        const publicKey = await getMonobankPublicKey();
-        const checkSignature = verifySignature(req, publicKey);
-
-        res.json({data: checkSignature});
-    } catch (error) {
-        console.error("Error:", error);
-        res.status(500).json({error: "An error occurred during signature verification"});
-
-    }
-});
-
 router.post("/make-transaction", async (req, res) => {
     const transactionId = uuidv4();
-
-    const invoiceUrl = await createInvoice(req, transactionId, "https://webhook.site/2968557e-0fca-4b6b-9c41-96828ec83aae",)
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const webhookUrl = `${baseUrl}/webhook`;
+    // const invoiceUrl = await createInvoice(req, transactionId, "https://webhook.site/2968557e-0fca-4b6b-9c41-96828ec83aae",)
+    const invoiceUrl = await createInvoice(req, transactionId, webhookUrl)
     if (!invoiceUrl) {
         return res.status(500).json({error: "Invoice creation failed."});
     }
@@ -42,5 +31,27 @@ router.post("/make-transaction", async (req, res) => {
 
     res.json({transactionId, invoiceUrl});
 })
+
+router.post("/webhook", async (req, res) => {
+    const publicKey = await getMonobankPublicKey();
+
+    try {
+        const xSign = req.headers["x-sign"];
+        if (!xSign) {
+            return res.status(400).json({error: "Header is missing"});
+        }
+
+        const isValid = verifySignature(req, publicKey, xSign);
+        if (isValid) {
+            console.log("Signature is valid");
+        } else {
+            res.status(400).json({error: "Invalid signature"})
+        }
+
+    } catch (error) {
+        console.error("Error verifying signature:", error.message);
+        res.status(400).json({error: error.message});
+    }
+});
 
 module.exports = router;

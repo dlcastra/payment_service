@@ -17,7 +17,7 @@ async function getMonobankPublicKey() {
     }
 }
 
-function verifySignature(req, publicKey) {
+function verifySignature(req, publicKey, xSign) {
     if (!publicKey) {
         throw new Error('Public key is undefined');
     }
@@ -26,24 +26,20 @@ function verifySignature(req, publicKey) {
         throw new Error('Request body is undefined');
     }
 
-    const xSignBase64 = req.headers['X-Sign'];
-    if (!xSignBase64) {
-        throw new Error('X-Sign header is missing');
-    }
-    const publicKeyBytes = Buffer.from(publicKey, "base64").toString();
-    const bodyBytes = Buffer.from(JSON.stringify(req.body));
-    const signatureBytes = Buffer.from(xSignBase64, 'base64');
+    const publicKeyPem = Buffer.from(publicKey, "base64").toString("utf-8");
+    const signature = Buffer.from(xSign, 'base64');
+    const bodyBytes = Buffer.from(JSON.stringify(req.body), 'utf-8');
 
-    const verify = crypto.createVerify('sha256');
+    const verify = crypto.createVerify('SHA256');
     verify.update(bodyBytes);
     verify.end();
 
-    const isValid = crypto.verify(publicKeyBytes, signatureBytes)
+    const isValid = verify.verify(publicKeyPem, signature);
     if (!isValid) {
-        throw new Error("Signature is not valid")
+        throw new Error("Signature is not valid");
     }
 
-    return isValid
+    return isValid;
 }
 
 async function createInvoice(req, uuid, webhook_url) {
