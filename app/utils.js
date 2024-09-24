@@ -30,7 +30,7 @@ function verifySignature(req, publicKey) {
     if (!xSignBase64) {
         throw new Error('X-Sign header is missing');
     }
-    const publicKeyBytes = Buffer.from(pubKeyBase64, "base64").toString();
+    const publicKeyBytes = Buffer.from(publicKey, "base64").toString();
     const bodyBytes = Buffer.from(JSON.stringify(req.body));
     const signatureBytes = Buffer.from(xSignBase64, 'base64');
 

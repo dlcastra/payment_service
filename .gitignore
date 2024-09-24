@@ -88,10 +88,5 @@ lerna-debug.log
 .DS_Store
 Thumbs.db
 
-# firebase
-firebase.json
-.firebaserc
-public/index.html
-
 # DB
 database.sqlite
