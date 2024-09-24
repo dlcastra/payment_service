@@ -28,6 +28,11 @@ const Transaction = sequelize.define("Transaction", {
         allowNull: false,
         defaultValue: DataTypes.NOW
     },
+    invoiceUrl: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true
+    },
     transactionStatus: {
         type: DataTypes.STRING,
         allowNull: false,
