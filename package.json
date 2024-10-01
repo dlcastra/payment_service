@@ -4,9 +4,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node --env-file=.env app/server.js",
-    "localtunnel": "lt --port 8080",
-    "dev": "npm-run-all --parallel start localtunnel"
+    "start": "node --env-file=.env app/server.js"
   },
   "keywords": [],
   "author": "",

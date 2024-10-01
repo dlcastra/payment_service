@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: payment-service
+    env_file: .env
+    environment:
+      NODE_ENV: production
+    volumes:
+      - db-data:/var/lib/sqlite3/data:rw
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+
+  ngrok:
+    build:
+      context: ./ngrok
+    container_name: ngrok
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    command: ngrok http 8080
+    depends_on:
+      - server
+    networks:
+      - app-network
+
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  db-data:
