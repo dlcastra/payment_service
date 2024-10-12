@@ -90,3 +90,6 @@ Thumbs.db
 
 # DB
 database.sqlite
+
+# ngrok
+ngrok.yml

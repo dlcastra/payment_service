@@ -17,11 +17,15 @@ router.post("/make-transaction", async (req, res) => {
     const transactionId = uuidv4();
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     const webhookUrl = `${baseUrl}/webhook`;
+    console.log(req.body)
+    console.log(transactionId)
+    console.log(webhookUrl)
 
     const invoiceUrl = await createInvoice(req, transactionId, webhookUrl)
     if (!invoiceUrl) {
         return res.status(500).json({error: "Invoice creation failed."});
     }
+    console.log(invoiceUrl)
 
     const transaction = await createTransaction(req, transactionId, invoiceUrl)
     if (!transaction) {

@@ -10,6 +10,9 @@ COPY package*.json ./
 
 # Install dependencies
 RUN npm install
+RUN mkdir -p /var/lib/sqlite3/data && \
+    chown -R node:node /var/lib/sqlite3/data && \
+    chmod -R 777 /var/lib/sqlite3/data
 
 # Copy the rest of the source files
 COPY . .
