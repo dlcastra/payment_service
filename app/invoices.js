@@ -54,13 +54,16 @@ router.post("/webhook", async (req, res) => {
     }
 
     // Transaction status
-    const {reference} = req.body;
-    const {status} = req.body
-    const transaction = await Transaction.findOne({where: {transactionId: reference} });
-    transaction.transactionStatus = status
-    await transaction.save()
+    const {reference, status} = req.body;
+    if (status) {
+        console.log(status);
+        const transaction = await Transaction.findOne({where: {transactionId: reference}});
+        console.log(transaction)
+        transaction.transactionStatus = status;
+        await transaction.save();
 
-    console.info(`Status of the transaction with id "${reference}" has been changed to "${status}"`)
+        console.info(`Status of the transaction with id "${reference}" has been changed to "${status}"`);
+    }
 });
 
 module.exports = router;

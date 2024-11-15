@@ -71,7 +71,7 @@ async function createInvoice(req, uuid, webhook_url) {
 
     } catch (error) {
         console.error('Error creating invoice:', error);
-        throw new Error('Invoice creation failed');
+        // throw new Error('Invoice creation failed');
     }
 }
 
