@@ -46,11 +46,11 @@ router.post("/webhook", async (req, res) => {
         if (isValid) {
             console.log("Signature is valid");
         } else {
-            res.status(400).json({error: "Invalid signature"})
+            return res.status(400).json({error: "Invalid signature"});
         }
     } catch (error) {
         console.error("Error verifying signature:", error.message);
-        res.status(400).json({error: error.message});
+        return res.status(400).json({error: error.message});
     }
 
     // Transaction status
