@@ -23,6 +23,7 @@ COPY .env .env
 EXPOSE 8080
 
 # Use non-root user to run the app
+RUN chown -R node:node /usr/src/server
 USER node
 
 # Start the application using npx to call locally installed npm-run-all

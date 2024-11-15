@@ -56,9 +56,7 @@ router.post("/webhook", async (req, res) => {
     // Transaction status
     const {reference, status} = req.body;
     if (status) {
-        console.log(status);
         const transaction = await Transaction.findOne({where: {transactionId: reference}});
-        console.log(transaction)
         transaction.transactionStatus = status;
         await transaction.save();
 
