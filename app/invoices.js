@@ -11,6 +11,8 @@ const {
     createTransaction
 } = require("../app/utils");
 const {Transaction} = require("../models/transaction");
+const axios = require("axios");
+// const {checkSignature} = require("./utils");
 
 const router = express.Router();
 
@@ -30,7 +32,7 @@ router.post("/make-transaction", async (req, res) => {
     }
     transaction.invoiceUrl = invoiceUrl;
 
-    res.json({transactionId, invoiceUrl});
+    res.status(201).json({"details": {transactionId, invoiceUrl}});
 })
 
 router.post("/webhook", async (req, res) => {
@@ -62,6 +64,25 @@ router.post("/webhook", async (req, res) => {
 
         console.info(`Status of the transaction with id "${reference}" has been changed to "${status}"`);
     }
+
+    // callback
+    // const djangoWebhookUrl = req.body.callback_url;
+    const djangoWebhookUrl = "http://host.docker.internal:8000/api/wallet/webhook/";
+    try {
+        const transaction = await Transaction.findOne({where: {transactionId: reference}})
+        await axios.post(djangoWebhookUrl, {
+            user_id: transaction.userId,
+            transactionId: reference,
+            invoiceId: req.body.invoiceId,
+            ccy: req.body.ccy,
+            amount: transaction.amount,
+            status: status
+        })
+        console.log("Data successfully sent to store_service");
+    } catch (error) {
+        console.error("Failed to send data to Django:", error.message);
+    }
+    res.status(200).json({message: "OK"});
 });
 
 module.exports = router;

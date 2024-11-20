@@ -2,6 +2,7 @@ const axios = require('axios');
 const crypto = require("crypto")
 
 const {Transaction} = require("../models/transaction")
+const {status} = require("express/lib/response");
 const MONOBANK_TOKEN = process.env.MONOBANK_TOKEN;
 
 async function getMonobankPublicKey() {
@@ -71,6 +72,7 @@ async function createInvoice(req, uuid, webhook_url) {
 
     } catch (error) {
         console.error('Error creating invoice:', error);
+        return {error: error}
         // throw new Error('Invoice creation failed');
     }
 }
@@ -91,10 +93,29 @@ async function createTransaction(req, transactionId, invoiceUrl) {
     }
 }
 
+async function checkSignature(req, res, publicKey) {
+    try {
+        const xSign = req.headers["x-sign"];
+        if (!xSign) {
+            return res.status(400).json({error: "Header is missing"});
+        }
+        const isValid = verifySignature(req, publicKey, xSign);
+        if (isValid) {
+            console.log("Signature is valid");
+        } else {
+            return res.status(400).json({error: "Invalid signature"});
+        }
+    } catch (error) {
+        console.error("Error verifying signature:", error.message);
+        return res.status(400).json({error: error.message});
+    }
+}
+
 // EXPORT
 module.exports = {
     getMonobankPublicKey,
     verifySignature,
     createInvoice,
-    createTransaction
+    createTransaction,
+    checkSignature
 }
