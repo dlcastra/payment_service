@@ -2,7 +2,6 @@ const axios = require('axios');
 const crypto = require("crypto")
 
 const {Transaction} = require("../models/transaction")
-const {status} = require("express/lib/response");
 const MONOBANK_TOKEN = process.env.MONOBANK_TOKEN;
 
 async function getMonobankPublicKey() {
@@ -73,7 +72,6 @@ async function createInvoice(req, uuid, webhook_url) {
     } catch (error) {
         console.error('Error creating invoice:', error);
         return {error: error}
-        // throw new Error('Invoice creation failed');
     }
 }
 
@@ -93,23 +91,45 @@ async function createTransaction(req, transactionId, invoiceUrl) {
     }
 }
 
-async function checkSignature(req, res, publicKey) {
+async function updateTransactionStatus(reference, status) {
+    const transaction = await Transaction.findOne({ where: { transactionId: reference } });
+    if (!transaction) {
+        console.warn(`Transaction with ID "${reference}" not found`)
+        return false;
+    }
+
+    transaction.transactionStatus = status;
+    await transaction.save();
+
+    console.info(`Status of transaction "${reference}" updated to "${status}"`);
+    return true
+}
+
+async function sendToDjangoWebhook(body, reference, status, webhookUrl) {
+    const djangoWebhookUrl = webhookUrl;
+    const transaction = await Transaction.findOne({ where: { transactionId: reference } });
+    if (!transaction) {
+        console.warn(`Transaction with ID "${reference}" not found`)
+        return { success: false, error: "Transaction not found" };
+    }
+
     try {
-        const xSign = req.headers["x-sign"];
-        if (!xSign) {
-            return res.status(400).json({error: "Header is missing"});
-        }
-        const isValid = verifySignature(req, publicKey, xSign);
-        if (isValid) {
-            console.log("Signature is valid");
-        } else {
-            return res.status(400).json({error: "Invalid signature"});
-        }
+        await axios.post(djangoWebhookUrl, {
+            user_id: transaction.userId,
+            transactionId: reference,
+            invoiceId: body.invoiceId,
+            ccy: body.ccy,
+            amount: transaction.amount,
+            status: status,
+        });
+        console.log("Data successfully sent to store_service");
+        return { success: true };
     } catch (error) {
-        console.error("Error verifying signature:", error.message);
-        return res.status(400).json({error: error.message});
+        console.error(`Failed to send data to Django: ${error.message}`)
+        return { success: false, error: error.message };
     }
 }
+
 
 // EXPORT
 module.exports = {
@@ -117,5 +137,6 @@ module.exports = {
     verifySignature,
     createInvoice,
     createTransaction,
-    checkSignature
+    updateTransactionStatus,
+    sendToDjangoWebhook
 }

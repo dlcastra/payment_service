@@ -10,9 +10,8 @@ const {
     createInvoice,
     createTransaction
 } = require("../app/utils");
-const {Transaction} = require("../models/transaction");
-const axios = require("axios");
-// const {checkSignature} = require("./utils");
+
+const {updateTransactionStatus, sendToDjangoWebhook} = require("./utils");
 
 const router = express.Router();
 
@@ -58,30 +57,21 @@ router.post("/webhook", async (req, res) => {
     // Transaction status
     const {reference, status} = req.body;
     if (status) {
-        const transaction = await Transaction.findOne({where: {transactionId: reference}});
-        transaction.transactionStatus = status;
-        await transaction.save();
-
-        console.info(`Status of the transaction with id "${reference}" has been changed to "${status}"`);
+        const is_updated = await updateTransactionStatus(reference, status);
+        if (!is_updated) {
+            console.log("Reference not found")
+            return res.status(404).json({error: "Reference not found"})
+        }
     }
 
-    // callback
-    // const djangoWebhookUrl = req.body.callback_url;
+    // Callback
     const djangoWebhookUrl = "http://host.docker.internal:8000/api/wallet/webhook/";
-    try {
-        const transaction = await Transaction.findOne({where: {transactionId: reference}})
-        await axios.post(djangoWebhookUrl, {
-            user_id: transaction.userId,
-            transactionId: reference,
-            invoiceId: req.body.invoiceId,
-            ccy: req.body.ccy,
-            amount: transaction.amount,
-            status: status
-        })
-        console.log("Data successfully sent to store_service");
-    } catch (error) {
-        console.error("Failed to send data to Django:", error.message);
+    const is_sent = await sendToDjangoWebhook(req.body, reference, status, djangoWebhookUrl);
+
+    if (!is_sent.success) {
+        return res.status(400).json({ error: is_sent.error || "Failed to send data to webhook" });
     }
+
     res.status(200).json({message: "OK"});
 });
 
